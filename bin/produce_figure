@@ -46,8 +46,12 @@ def make_numerical_tex_string(step, input_size, output_size, padding,
         raise ValueError("Only a dilation of 1 is currently supported for numerical output")
     max_steps = output_size ** 2
     if step >= max_steps:
-        raise ValueError('step {} out of bounds (there are '.format(step) +
-                         '{} steps for this animation'.format(max_steps))
+        raise ValueError(
+            (
+                f'step {step} out of bounds (there are '
+                + f'{max_steps} steps for this animation'
+            )
+        )
 
     with open(os.path.join('templates', 'numerical_figure.txt'), 'r') as f:
         tex_template = f.read()
@@ -90,31 +94,39 @@ def make_numerical_tex_string(step, input_size, output_size, padding,
     else:
         kernel_values_string = '\n'
 
-    return six.b(tex_template.format(**{
-        'PADDING_TO': '{0},{0}'.format(total_input_size),
-        'INPUT_FROM': '{0},{0}'.format(padding),
-        'INPUT_TO': '{0},{0}'.format(padding + input_size),
-        'INPUT_VALUES': ''.join(
-            "\\node (node) at ({0},{1}) {{\\footnotesize {2}}};\n".format(
-                i + 0.5, j + 0.5, input_[total_input_size - 1 - j, i])
-            for i, j in itertools.product(range(total_input_size),
-                                          range(total_input_size))),
-        'INPUT_GRID_FROM': '{},{}'.format(stride * offset_x,
-                                          stride * offset_y),
-        'INPUT_GRID_TO': '{},{}'.format(stride * offset_x + kernel_size,
-                                        stride * offset_y + kernel_size),
-        'KERNEL_VALUES': kernel_values_string,
-        'OUTPUT_TO': '{0},{0}'.format(output_size),
-        'OUTPUT_GRID_FROM': '{},{}'.format(offset_x, offset_y),
-        'OUTPUT_GRID_TO': '{},{}'.format(offset_x + 1, offset_y + 1),
-        'OUTPUT_VALUES': ''.join(
-            "\\node (node) at ({0},{1}) {{\\tiny {2:.1f}}};\n".format(
-                i + 0.5, j + 0.5, output[output_size - 1 - j, i])
-            for i, j in itertools.product(range(output_size),
-                                          range(output_size))),
-        'XSHIFT': '{}cm'.format(total_input_size + 1),
-        'YSHIFT': '{}cm'.format((total_input_size - output_size) // 2),
-    }))
+    return six.b(
+        tex_template.format(
+            **{
+                'PADDING_TO': '{0},{0}'.format(total_input_size),
+                'INPUT_FROM': '{0},{0}'.format(padding),
+                'INPUT_TO': '{0},{0}'.format(padding + input_size),
+                'INPUT_VALUES': ''.join(
+                    "\\node (node) at ({0},{1}) {{\\footnotesize {2}}};\n".format(
+                        i + 0.5, j + 0.5, input_[total_input_size - 1 - j, i]
+                    )
+                    for i, j in itertools.product(
+                        range(total_input_size), range(total_input_size)
+                    )
+                ),
+                'INPUT_GRID_FROM': f'{stride * offset_x},{stride * offset_y}',
+                'INPUT_GRID_TO': f'{stride * offset_x + kernel_size},{stride * offset_y + kernel_size}',
+                'KERNEL_VALUES': kernel_values_string,
+                'OUTPUT_TO': '{0},{0}'.format(output_size),
+                'OUTPUT_GRID_FROM': f'{offset_x},{offset_y}',
+                'OUTPUT_GRID_TO': f'{offset_x + 1},{offset_y + 1}',
+                'OUTPUT_VALUES': ''.join(
+                    "\\node (node) at ({0},{1}) {{\\tiny {2:.1f}}};\n".format(
+                        i + 0.5, j + 0.5, output[output_size - 1 - j, i]
+                    )
+                    for i, j in itertools.product(
+                        range(output_size), range(output_size)
+                    )
+                ),
+                'XSHIFT': f'{total_input_size + 1}cm',
+                'YSHIFT': f'{(total_input_size - output_size) // 2}cm',
+            }
+        )
+    )
 
 
 def make_arithmetic_tex_string(step, input_size, output_size, padding,
@@ -167,8 +179,12 @@ def make_arithmetic_tex_string(step, input_size, output_size, padding,
 
     max_steps = output_size ** 2
     if step >= max_steps:
-        raise ValueError('step {} out of bounds (there are '.format(step) +
-                         '{} steps for this animation'.format(max_steps))
+        raise ValueError(
+            (
+                f'step {step} out of bounds (there are '
+                + f'{max_steps} steps for this animation'
+            )
+        )
 
     with open(os.path.join('templates', 'arithmetic_figure.txt'), 'r') as f:
         tex_template = f.read()
@@ -179,33 +195,37 @@ def make_arithmetic_tex_string(step, input_size, output_size, padding,
                                      range(output_size)))
     offset_y, offset_x = offsets[step]
 
-    return six.b(tex_template.format(**{
-        'PADDING_TO': '{0},{0}'.format(total_input_size),
-        'INPUT_UNITS': ''.join(
-            unit_template.format(padding + spacing * i,
-                                 bottom_pad + padding + spacing * j,
-                                 padding + spacing * i + 1,
-                                 bottom_pad + padding + spacing * j + 1)
-            for i, j in itertools.product(range(input_size),
-                                          range(input_size))),
-        'INPUT_GRID_FROM_X': '{}'.format(
-            stride * offset_x),
-        'INPUT_GRID_FROM_Y': '{}'.format(
-            y_adjustment + stride * offset_y),
-        'INPUT_GRID_TO_X': '{}'.format(
-            stride * offset_x + kernel_size),
-        'INPUT_GRID_TO_Y': '{}'.format(
-            y_adjustment + stride * offset_y + kernel_size),
-        'DILATION': '{}'.format(dilation),
-        'OUTPUT_BOTTOM_LEFT': '{},{}'.format(offset_x, offset_y),
-        'OUTPUT_BOTTOM_RIGHT': '{},{}'.format(offset_x + 1, offset_y),
-        'OUTPUT_TOP_LEFT': '{},{}'.format(offset_x, offset_y + 1),
-        'OUTPUT_TOP_RIGHT': '{},{}'.format(offset_x + 1, offset_y + 1),
-        'OUTPUT_TO': '{0},{0}'.format(output_size),
-        'OUTPUT_GRID_FROM': '{},{}'.format(offset_x, offset_y),
-        'OUTPUT_GRID_TO': '{},{}'.format(offset_x + 1, offset_y + 1),
-        'OUTPUT_ELEVATION': '{}cm'.format(total_input_size + 1),
-    }))
+    return six.b(
+        tex_template.format(
+            **{
+                'PADDING_TO': '{0},{0}'.format(total_input_size),
+                'INPUT_UNITS': ''.join(
+                    unit_template.format(
+                        padding + spacing * i,
+                        bottom_pad + padding + spacing * j,
+                        padding + spacing * i + 1,
+                        bottom_pad + padding + spacing * j + 1,
+                    )
+                    for i, j in itertools.product(
+                        range(input_size), range(input_size)
+                    )
+                ),
+                'INPUT_GRID_FROM_X': f'{stride * offset_x}',
+                'INPUT_GRID_FROM_Y': f'{y_adjustment + stride * offset_y}',
+                'INPUT_GRID_TO_X': f'{stride * offset_x + kernel_size}',
+                'INPUT_GRID_TO_Y': f'{y_adjustment + stride * offset_y + kernel_size}',
+                'DILATION': f'{dilation}',
+                'OUTPUT_BOTTOM_LEFT': f'{offset_x},{offset_y}',
+                'OUTPUT_BOTTOM_RIGHT': f'{offset_x + 1},{offset_y}',
+                'OUTPUT_TOP_LEFT': f'{offset_x},{offset_y + 1}',
+                'OUTPUT_TOP_RIGHT': f'{offset_x + 1},{offset_y + 1}',
+                'OUTPUT_TO': '{0},{0}'.format(output_size),
+                'OUTPUT_GRID_FROM': f'{offset_x},{offset_y}',
+                'OUTPUT_GRID_TO': f'{offset_x + 1},{offset_y + 1}',
+                'OUTPUT_ELEVATION': f'{total_input_size + 1}cm',
+            }
+        )
+    )
 
 
 def compile_figure(which_, name, step, **kwargs):
@@ -214,17 +234,20 @@ def compile_figure(which_, name, step, **kwargs):
     else:
         tex_string = make_numerical_tex_string(step, **kwargs)
     jobname = '{}_{:02d}'.format(name, step)
-    p = subprocess.Popen(['pdflatex', '-jobname={}'.format(jobname),
-                          '-output-directory', 'pdf'],
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    p = subprocess.Popen(
+        ['pdflatex', f'-jobname={jobname}', '-output-directory', 'pdf'],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     stdoutdata, stderrdata = p.communicate(input=tex_string)
     # Remove logs and aux if compilation was successfull
     if '! LaTeX Error' in stdoutdata or '! Emergency stop' in stdoutdata:
-        print('! LaTeX Error: check the log file in pdf/{}.log'.format(jobname))
+        print(f'! LaTeX Error: check the log file in pdf/{jobname}.log')
     else:
-        subprocess.call(['rm'] + glob('pdf/{}.aux'.format(jobname)) +
-                        glob('pdf/{}.log'.format(jobname)))
+        subprocess.call(
+            (['rm'] + glob(f'pdf/{jobname}.aux') + glob(f'pdf/{jobname}.log'))
+        )
 
 
 if __name__ == "__main__":

@@ -54,10 +54,12 @@ animations = dict([(name, dict(zip(fields, config)))
 
 
 def make_header():
-    return ('.PHONY : all_animations\nall_animations : {}\n\n'.format(
-                ' '.join(['gif/{}.gif'.format(name)
-                          for name in animations.keys()])) +
-            '.SECONDARY : \n')
+    return (
+        '.PHONY : all_animations\nall_animations : {}\n\n'.format(
+            ' '.join([f'gif/{name}.gif' for name in animations.keys()])
+        )
+        + '.SECONDARY : \n'
+    )
 
 
 def make_report_section():
@@ -82,11 +84,25 @@ def make_gif_section():
         else:
             steps = config['output-size'] ** 2
         rules.append(
-            'gif/{}.gif : '.format(name) +
-            ' '.join(['png/{}_{:02d}.png'.format(name, i)
-                      for i in range(steps)]) + '\n' +
-            '\tconvert -delay 100 -loop 0 -layers Optimize +map -dispose previous $^ $@\n' +
-            '\tgifsicle --batch -O3 $@\n')
+            (
+                (
+                    (
+                        (
+                            f'gif/{name}.gif : '
+                            + ' '.join(
+                                [
+                                    'png/{}_{:02d}.png'.format(name, i)
+                                    for i in range(steps)
+                                ]
+                            )
+                        )
+                        + '\n'
+                    )
+                    + '\tconvert -delay 100 -loop 0 -layers Optimize +map -dispose previous $^ $@\n'
+                )
+                + '\tgifsicle --batch -O3 $@\n'
+            )
+        )
     return '\n'.join(rules)
 
 
@@ -98,30 +114,37 @@ def make_png_section():
 def make_pdf_section():
     rules = []
     for name, config in iteritems(animations):
-        if config['transposed']:
-            steps = config['input-size'] ** 2
-        else:
-            steps = config['output-size'] ** 2
         if config['type'] == 'arithmetic':
             dependencies = arithmetic_files
         else:
             dependencies = numerical_files
-        subrules = []
-        for i in range(steps):
-            subrules.append(
-                'pdf/{}_{:02d}.pdf : {}\n'.format(name, i, dependencies) +
-                '\t./bin/produce_figure ' +
-                '{} {} {} '.format(config['type'], name, i) +
-                '--input-size={} '.format(config['input-size']) +
-                '--output-size={} '.format(config['output-size']) +
-                '--padding={} '.format(config['padding']) +
-                '--kernel-size={} '.format(config['kernel-size']) +
-                '--stride={} '.format(config['stride']) +
-                ('--dilation={} '.format(config['dilation'])
-                 if config['dilation'] != 1 else '' ) +
-                ('--mode={} '.format(config['mode'])
-                 if config['type'] == 'numerical' else '') +
-                ('--transposed\n' if config['transposed'] else '\n'))
+        steps = (
+            config['input-size'] ** 2
+            if config['transposed']
+            else config['output-size'] ** 2
+        )
+        subrules = [
+            'pdf/{}_{:02d}.pdf : {}\n'.format(name, i, dependencies)
+            + '\t./bin/produce_figure '
+            + f"{config['type']} {name} {i} "
+            + f"--input-size={config['input-size']} "
+            + f"--output-size={config['output-size']} "
+            + f"--padding={config['padding']} "
+            + f"--kernel-size={config['kernel-size']} "
+            + f"--stride={config['stride']} "
+            + (
+                f"--dilation={config['dilation']} "
+                if config['dilation'] != 1
+                else ''
+            )
+            + (
+                f"--mode={config['mode']} "
+                if config['type'] == 'numerical'
+                else ''
+            )
+            + ('--transposed\n' if config['transposed'] else '\n')
+            for i in range(steps)
+        ]
         rules.append('\n'.join(subrules))
     return '\n'.join(rules)
 
